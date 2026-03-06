@@ -1,1 +1,186 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flash-Doc Pro: Енергетика мозку</title>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .backface-hidden { -webkit-backface-visibility: hidden; backface-visibility: hidden; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(156, 163, 175, 0.3); border-radius: 10px; }
+        .bg-indigo-600.custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.25); }
+        .card-inner { transition: transform 0.7s; transform-style: preserve-3d; position: relative; width: 100%; height: 100%; }
+        .is-flipped { transform: rotateY(180deg); }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div id="root"></div>
 
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        const cards = [
+            // БАЗОВИЙ РІВЕНЬ
+            { id: 1, level: "Базовий рівень", source: "База ВНМУ", question: "Яка речовина є єдиним і безальтернативним джерелом енергії для головного мозку в нормальних фізіологічних умовах?", options: ["Жирні кислоти", "Глюкоза", "Амінокислоти", "Гліцерол", "Лактат"], correctIndex: 1, answer: { logic: "У нормі мозок живиться виключно глюкозою.", conspectus: "Мозок споживає близько 120г глюкози на добу. Це єдине паливо, яке згорає повністю до CO2 та води для отримання АТФ.", keyPoints: ["Глюкоза = паливо №1", "20% всієї глюкози йде в мозок", "Глікогену в ЦНС майже немає"] } },
+            { id: 2, level: "Базовий рівень", source: "База ОНМедУ", question: "Який процес споживає близько 70% всього АТФ у нейронах у стані спокою?", options: ["Синтез білків", "Робота Na+/K+-АТФ-ази", "Аксонний транспорт", "Синтез медіаторів", "Поділ клітин"], correctIndex: 1, answer: { logic: "Насоси підтримують електричний заряд мембрани.", conspectus: "Нейрон постійно 'викачує' натрій і 'закачує' калій. Це необхідно для мембранного потенціалу. Якщо насос зупиниться, клітина розрядиться.", keyPoints: ["Na/K насос — головний споживач", "АТФ потрібен для іонних градієнтів", "Основа збудливості"] } },
+            { id: 3, level: "Базовий рівень", source: "БХ.pdf", question: "Яка сполука стає основним паливом мозку при тривалому голодуванні?", options: ["Глікоген", "Жирні кислоти", "Кетонові тіла", "Сечовина", "Холестерин"], correctIndex: 2, answer: { logic: "Печінка робить кетони для живлення ЦНС.", conspectus: "При голодуванні (3+ дні) запаси цукру вичерпані. Печінка синтезує ацетоацетат (кетонові тіла), які проходять через ГЕБ.", keyPoints: ["Кетони = паливо при голоді", "Синтез у печінці", "Замінюють до 70% глюкози"] }, },
+            { id: 4, level: "Базовий рівень", source: "Мед. Психологія", question: "Чому нейрони не можуть використовувати вільні жирні кислоти крові як джерело енергії?", options: ["Не мають мітохондрій", "Жирні кислоти токсичні", "Відсутній карнітин", "Не проходять через ГЕБ", "Немає ферментів"], correctIndex: 3, answer: { logic: "Гематоенцефалічний бар'єр занадто щільний.", conspectus: "Жирні кислоти зв'язані з альбумінами. Цей комплекс не може пройти крізь стінку судин мозку.", keyPoints: ["ГЕБ не пропускає жири", "Жири — тільки для м'язів/серця", "Мозку потрібні дрібні молекули"] }, },
+            { id: 5, level: "Базовий рівень", source: "Тести Крок-1", question: "Який GLUT забезпечує незалежне від інсуліну надходження глюкози в нейрони?", options: ["GLUT-1", "GLUT-2", "GLUT-3", "GLUT-4", "SGLT-1"], correctIndex: 2, answer: { logic: "Мозок живиться автономно від гормонів.", conspectus: "Нейрони мають GLUT-3. Він працює завжди, незалежно від того, чи є в крові інсулін. Це гарантує живлення навіть при стресі.", keyPoints: ["GLUT-3 = Нейрони", "Інсулінонезалежний", "Висока спорідненість"] }, },
+            { id: 6, level: "Базовий рівень", source: "Крок-Онлайн", question: "На що витрачається більшість кисню, який споживає мозок?", options: ["Гліколіз", "Окисне фосфорилювання", "Окиснення жирів", "Синтез медіаторів", "Розпад перекисів"], correctIndex: 1, answer: { logic: "Кисень потрібен для синтезу АТФ у мітохондріях.", conspectus: "Мітохондрії — енергостанції. Кисень там приймає електрони, що дозволяє створювати АТФ у величезних кількостях.", keyPoints: ["O2 = АТФ", "Мітохондрії нейронів дуже активні", "Без кисню АТФ падає в 19 разів"] }, },
+            { id: 7, level: "Базовий рівень", source: "Буклети Крок-1", question: "Скільки АТФ дає 1 глюкоза в мозку при гострій гіпоксії?", options: ["2", "12", "36", "38", "0"], correctIndex: 0, answer: { logic: "Без кисню працює лише слабкий гліколіз.", conspectus: "Анаеробний гліколіз дає лише 2 АТФ замість 38. Це в 19 разів менше норми — нейрон просто не встигає 'зарядитися'.", keyPoints: ["Гіпоксія = 2 АТФ", "Накопичується лактат", "Швидка смерть клітини"] }, },
+            { id: 8, level: "Базовий рівень", source: "База ОНМедУ", question: "Який GLUT формує 'ворота' ГЕБ (у судинах)?", options: ["GLUT-1", "GLUT-2", "GLUT-3", "GLUT-4", "GLUT-5"], correctIndex: 0, answer: { logic: "GLUT-1 працює в ендотелії судин мозку.", conspectus: "Щоб зайти в мозок, глюкоза проходить GLUT-1 (судина), а потім GLUT-3 (нейрон).", keyPoints: ["GLUT-1 = судинна стінка ГЕБ", "Дефіцит GLUT-1 викликає судоми", "Також є в еритроцитах"] }, },
+            { id: 9, level: "Базовий рівень", source: "База ВНМУ", question: "Маркер руйнування мозку в крові при травмах:", options: ["АЛТ", "КК-ММ", "КК-МВ", "КК-ВВ", "Лужна фосфатаза"], correctIndex: 3, answer: { logic: "Креатинкіназа ВВ-типу специфічна для мозку.", conspectus: "ВВ (Brain-Brain) виходить з нейронів при їх пошкодженні (інсульт, травма).", keyPoints: ["КК-ВВ = Мозок", "Діагностика травм ЦНС", "Фермент енергообміну"] }, },
+            { id: 10, level: "Базовий рівень", source: "Мед. Психологія", question: "Чому аміак викликає кому в мозку?", options: ["Прискорює ЦТК", "Зупиняє ЦТК через дефіцит субстратів", "Блокує глюкозу", "Руйнує ДНК", "Синтезує жири"], correctIndex: 1, answer: { logic: "Аміак 'краде' альфа-кетоглутарат.", conspectus: "Мозок намагається знешкодити аміак і витрачає на це запчастини циклу Кребса. Цикл стає, АТФ зникає.", keyPoints: ["Аміак зупиняє цикл Кребса", "Енергетичний голод", "Призводить до коми"] }, },
+
+            // ПОПУЛЯРНІ ТЕСТИ
+            { id: 11, level: "Популярне", source: "Тести Крок-1", question: "Який фермент дозволяє мозку живитись при низькому цукрі (Km)?", options: ["Глюкокіназа", "Гексокіназа", "Глюкозо-6-фосфатаза", "ФФК", "Альдолаза"], correctIndex: 1, answer: { logic: "Гексокіназа має дуже низьку Km.", conspectus: "Низька Km означає, що фермент хапає глюкозу миттєво, навіть якщо її дуже мало в крові.", keyPoints: ["Низька Km = висока любов до цукру", "Гексокіназа I типу", "Захист від гіпоглікемії"] }, },
+            { id: 12, level: "Популярне", source: "БХ.pdf", question: "Який фермент відсутній у мозку, замикаючи в ньому глюкозу?", options: ["Гексокіназа", "Глюкозо-6-фосфатаза", "Енолаза", "Піруваткіназа", "Глікогенсинтаза"], correctIndex: 1, answer: { logic: "Мозок не може випускати глюкозу назад.", conspectus: "Тільки печінка може зняти фосфат і віддати цукор у кров. Мозок — тільки споживач.", keyPoints: ["Немає Глюкозо-6-фосфатази", "Цукор заходить і 'замикається'", "Мозок не ділиться паливом"] }, },
+            { id: 13, level: "Популярне", source: "Крок-Онлайн", question: "Ціаніди вбивають мозок через блок якого комплексу?", options: ["Гліколіз", "Комплекс I", "Цитохромоксидаза (IV)", "Цикл Кребса", "Насос"], correctIndex: 2, answer: { logic: "Ціаніди блокують перенос електронів на O2.", conspectus: "Це останній крок синтезу АТФ. Якщо блок — енергія зникає за секунди.", keyPoints: ["Ціаніди = блок IV комплексу", "Тканинна гіпоксія", "Смерть від дефіциту АТФ"] }, },
+            { id: 14, level: "Популярне", source: "Буклети Крок-1", question: "Головний шлях знешкодження аміаку в мозку?", options: ["Сечовина", "Глутамін", "Сечова кислота", "Ліквор", "Аспарагін"], correctIndex: 1, answer: { logic: "Аміак зв'язується з глутаматом.", conspectus: "Утворюється глутамін — безпечна амінокислота, яка виносить аміак у кров.", keyPoints: ["Аміак + Глутамат = Глутамін", "Фермент: Глутамінсинтетаза", "Потребує АТФ"] }, },
+            { id: 15, level: "Популярне", source: "База ВНМУ", question: "Наслідок надлишку глутаміну для астроцитів?", options: ["Набряк", "Зморщування", "Розрив ядра", "Блокада", "Нейрогенез"], correctIndex: 0, answer: { logic: "Глутамін тягне воду в клітину (осмос).", conspectus: "Чим більше глутаміну — тим більше води заходить в мозок. Це веде до небезпечного набряку.", keyPoints: ["Глутамін = осмос", "Набряк астроцитів", "Печінкова кома"] }, },
+            { id: 16, level: "Популярне", source: "Мед. Психологія", question: "Який метаболіт ЦТК 'краде' аміак?", options: ["Цитрат", "Сукцинат", "Альфа-кетоглутарат", "Малат", "Оксалоацетат"], correctIndex: 2, answer: { logic: "Аміак перетворює кетоглутарат на глутамат.", conspectus: "Це забирає субстрат з циклу Кребса і зупиняє дихання клітини.", keyPoints: ["Вимивання кетоглутарату", "Зупинка ЦТК", "Причина енергодефіциту"] }, },
+            { id: 17, level: "Популярне", source: "База ОНМедУ", question: "Що нейрон робить з лактатом від глії?", options: ["Викидає", "Запасає", "Окиснює до пірувату", "Блокує", "Робить цукор"], correctIndex: 2, answer: { logic: "Лактат — це готове паливо.", conspectus: "Нейрон спалює лактат швидше за глюкозу. Це допомагає при навантаженнях.", keyPoints: ["Лактатний шатл", "Лактат ➔ Піруват", "Економія енергії"] }, },
+            { id: 18, level: "Популярне", source: "Тести Крок-1", question: "ГАМК-шунт повертає ГАМК в енергообмін як:", options: ["Цитрат", "Сукцинат", "Малат", "Оксалоацетат", "Кетоглутарат"], correctIndex: 1, answer: { logic: "ГАМК стає бурштиновою кислотою.", conspectus: "Це дозволяє нейрону 'дихати', навіть якщо початок циклу Кребса зламаний.", keyPoints: ["ГАМК ➔ Сукцинат", "Енергетичний шунт", "Захист при стресі"] }, },
+            { id: 19, level: "Популярне", source: "Крок-Онлайн", question: "Фермент миттєвого фосфорилювання АДФ:", options: ["Креатинкіназа", "Аденілаткіназа", "Гексокіназа", "АТФ-синтаза", "Фосфорилаза"], correctIndex: 0, answer: { logic: "Знімає фосфат з креатинфосфату.", conspectus: "Це найшвидший спосіб отримати АТФ у перші секунди роботи.", keyPoints: ["Креатинфосфат = резерв", "Креатинкіназа", "Запас на 5-10 секунд"] }, },
+            { id: 20, level: "Популярне", source: "Буклети Крок-1", question: "Реакція Глутамат ➔ ГАМК:", options: ["Окиснення", "Трансамінування", "Гідроксилювання", "Декарбоксилювання", "Метилювання"], correctIndex: 3, answer: { logic: "Відщеплення CO2.", conspectus: "Збуджуючий глутамат стає гальмівним ГАМК. Потрібен вітамін B6.", keyPoints: ["-CO2 = ГАМК", "Глутаматдекарбоксилаза", "Баланс збудження"] }, },
+
+            // ЕКСПЕРТНИЙ РІВЕНЬ
+            { id: 21, level: "Експертний рівень", source: "База ВНМУ", question: "Фермент знешкодження перекису водню в нейронах:", options: ["СОД", "Глутатіонпероксидаза", "Цитохромоксидаза", "Оксигеназа", "МАО"], correctIndex: 1, answer: { logic: "Використовує глутатіон для захисту.", conspectus: "Мозок жирний і дихає киснем. Щоб не 'згоріти' від радикалів, потрібен глутатіон.", keyPoints: ["Глутатіонпероксидаза", "Захист ліпідів", "Антиоксидант №1"] }, },
+            { id: 22, level: "Експертний рівень", source: "БХ.pdf", question: "Продукт ПФШ для відновлення глутатіону?", options: ["Рибоза", "НАДГ", "ФАДН2", "НАДФН", "АТФ"], correctIndex: 3, answer: { logic: "НАДФН — головний відновник.", conspectus: "Пентозний шлях у мозку дає 'електрони' (НАДФН) для перезарядки антиоксидантів.", keyPoints: ["ПФШ ➔ НАДФН", "Перезарядка глутатіону", "Захист від смерті"] }, },
+            { id: 23, level: "Експертний рівень", source: "База ОНМедУ", question: "Фермент спалювання кетонів у мозку (відсутній у печінці):", options: ["Гексокіназа", "Тіофораза", "Карбоксилаза", "Синтаза", "Ліпаза"], correctIndex: 1, answer: { logic: "Активує кетонове тіло Коензимом А.", conspectus: "Тіофораза дозволяє мозку їсти кетони. Печінка їх тільки готує, але сама не споживає.", keyPoints: ["Тіофораза", "Активація ацетоацетату", "Тільки в споживачах"] }, },
+            { id: 24, level: "Експертний рівень", source: "Мед. Психологія", question: "Що таке 'аеробний гліколіз' мозку?", options: ["Немає мітохондрій", "Лактат при наявності O2", "Цукор з O2", "Блок ферментів", "Лише жири"], correctIndex: 1, answer: { logic: "Глія робить лактат навіть з киснем.", conspectus: "Астроцити спеціально готують лактат для нейронів постійно. Це норма.", keyPoints: ["Ефект Варбурга", "Лактат — це норма для глії", "Швидка енергія"] }, },
+            { id: 25, level: "Експертний рівень", source: "Тести Крок-1", question: "Де лежить запас глікогену в мозку?", options: ["Аксони", "Везикули", "Астроцити", "Мікроглія", "Оболонки"], correctIndex: 2, answer: { logic: "Нейрони не мають комори, глія — має.", conspectus: "Астроцити тримають трохи цукру 'на чорний день'. Вистачає на 2-5 хвилин.", keyPoints: ["Глікоген в глії", "Нейрони без запасів", "Резерв на хвилини"] }, },
+            { id: 26, level: "Експертний рівень", source: "Крок-Онлайн", question: "Головний лімітуючий фермент гліколізу мозку:", options: ["Гексокіназа", "ФФК-1", "Піруваткіназа", "Альдолаза", "Енолаза"], correctIndex: 1, answer: { logic: "Керує швидкістю всього процесу.", conspectus: "Фосфофруктокіназа-1 відкриває або закриває кран енергії залежно від АТФ.", keyPoints: ["ФФК-1 = контроль", "Активується АМФ", "Гальмується АТФ"] }, },
+            { id: 27, level: "Експертний рівень", source: "Буклети Крок-1", question: "Чому при ішемії стоїть ЦТК (крім O2)?", options: ["Немає ферментів", "Немає НАД+ та ФАД", "Розрив", "Блок", "Кальцій"], correctIndex: 1, answer: { logic: "Немає 'порожніх вагонеток' для електронів.", conspectus: "Цикл Кребса потребує окислювачів. Якщо дихання стоїть — вагонетки повні, цикл зупиняється.", keyPoints: ["Дефіцит НАД+", "Зв'язок з диханням", "Енергоблок"] }, },
+            { id: 28, level: "Експертний рівень", source: "База ВНМУ", question: "До чого веде активація ФФК аміаком?", options: ["Алкалоз", "Лактат-ацидоз", "Кетони", "Блок", "Глікоген"], correctIndex: 1, answer: { logic: "Аміак тисне на 'газ' гліколізу.", conspectus: "Цукор горить швидко, мітохондрії стоять. Результат — мозок тоне в молочній кислоті.", keyPoints: ["Закислення мозку", "Лактат-ацидоз", "Кома"] }, },
+            { id: 29, level: "Експертний рівень", source: "База ОНМедУ", question: "Як електрони НАДГ потрапляють в мітохондрії?", options: ["Карнітин", "Дифузія", "Малат-аспартатний човник", "Гліцеролфосфатний човник", "GLUT"], correctIndex: 2, answer: { logic: "НАДГ занадто великий для мембрани.", conspectus: "Нейрон використовує хімічний 'ліфт' (малат), щоб передати енергію всередину.", keyPoints: ["Човникові системи", "Малат-аспартат", "38 АТФ"] }, },
+            { id: 30, level: "Експертний рівень", source: "Мед. Психологія", question: "Білок-тригер апоптозу з мітохондрій:", options: ["Гексокіназа", "Цитохром С", "АТФ-синтаза", "Каспаза-1", "Кальмодулін"], correctIndex: 1, answer: { logic: "Точка неповернення при смерті клітини.", conspectus: "Коли мітохондрія руйнується, Цитохром С виходить і вмикає програму самознищення.", keyPoints: ["Цитохром С", "Сигнал смерті", "Апоптоз нейрона"] }, }
+        ];
+
+        function App() {
+            const [currentIndex, setCurrentIndex] = useState(0);
+            const [isFlipped, setIsFlipped] = useState(false);
+            const [selectedOption, setSelectedOption] = useState(null);
+
+            const currentCard = cards[currentIndex];
+
+            const handleFlip = () => setIsFlipped(!isFlipped);
+            const handleNext = () => { setIsFlipped(false); setSelectedOption(null); setCurrentIndex((prev) => (prev + 1) % cards.length); };
+            const handlePrev = () => { setIsFlipped(false); setSelectedOption(null); setCurrentIndex((prev) => (prev - 1 + cards.length) % cards.length); };
+            const handleSelect = (idx) => { if (!isFlipped) setSelectedOption(idx); };
+
+            useEffect(() => { lucide.createIcons(); }, [currentIndex, isFlipped]);
+
+            return (
+                <div className="fixed inset-0 bg-gray-50 flex flex-col p-4 sm:p-6 overflow-hidden">
+                    <div className="w-full max-w-md mx-auto flex flex-col h-full">
+                        
+                        {/* Header */}
+                        <div className="flex items-center justify-between shrink-0 mb-4 mt-2">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg">
+                                    <i data-lucide="brain-circuit"></i>
+                                </div>
+                                <div>
+                                    <h1 className="text-lg font-black text-gray-900">Flash-Doc Pro</h1>
+                                    <p className="text-[10px] text-indigo-600 font-black uppercase tracking-widest">Енергетика мозку</p>
+                                </div>
+                            </div>
+                            <div className="bg-white px-3 py-1.5 rounded-xl border border-gray-200 shadow-sm flex items-center gap-1.5">
+                                <i data-lucide="graduation-cap" className="text-indigo-600 w-4 h-4"></i>
+                                <span className="text-xs font-black text-gray-700">{currentIndex + 1} / {cards.length}</span>
+                            </div>
+                        </div>
+
+                        {/* Card Area */}
+                        <div className="relative flex-1 w-full [perspective:1500px] mb-4 min-h-0">
+                            <div className={`card-inner ${isFlipped ? 'is-flipped' : ''}`}>
+                                
+                                {/* FRONT */}
+                                <div className="absolute inset-0 w-full h-full bg-white rounded-[32px] shadow-xl border border-gray-100 flex flex-col backface-hidden z-10 overflow-y-auto custom-scrollbar">
+                                    <div className="p-6 pb-2">
+                                        <div className="flex items-center justify-between mb-4 gap-2">
+                                            <span className="px-3 py-1.5 bg-indigo-50 text-indigo-700 text-[9px] font-black uppercase tracking-widest rounded-lg border border-indigo-100/50">
+                                                {currentCard.level}
+                                            </span>
+                                            <span className="px-3 py-1.5 bg-gray-50 text-gray-500 text-[8px] font-black uppercase tracking-widest rounded-lg border border-gray-200 shadow-sm">
+                                                {currentCard.source}
+                                            </span>
+                                        </div>
+                                        <h2 className="text-lg sm:text-xl font-bold leading-snug text-gray-800">{currentCard.question}</h2>
+                                    </div>
+                                    <div className="flex-1 px-6 pb-6 space-y-2.5">
+                                        {currentCard.options.map((opt, idx) => {
+                                            const isCorrect = idx === currentCard.correctIndex;
+                                            const isSelected = selectedOption === idx;
+                                            let btnStyle = "border-gray-100 bg-gray-50 text-gray-700";
+                                            if (isSelected) btnStyle = isCorrect ? "border-emerald-500 bg-emerald-50 text-emerald-700 ring-2 ring-emerald-100" : "border-rose-500 bg-rose-50 text-rose-700 ring-2 ring-rose-100";
+                                            return (
+                                                <button key={idx} onClick={() => handleSelect(idx)} className={`w-full text-left p-4 rounded-2xl border-2 transition-all flex items-center justify-between ${btnStyle}`}>
+                                                    <span className="font-bold text-sm leading-tight">{opt}</span>
+                                                    {isSelected && (isCorrect ? <i data-lucide="check-circle-2" className="text-emerald-500"></i> : <i data-lucide="x-circle" className="text-rose-500"></i>)}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+
+                                {/* BACK */}
+                                <div className="absolute inset-0 w-full h-full bg-indigo-600 rounded-[32px] shadow-xl text-white [transform:rotateY(180deg)] backface-hidden overflow-y-auto custom-scrollbar flex flex-col">
+                                    <div className="p-6 flex flex-col min-h-full">
+                                        <div className="flex items-center justify-between mb-4 border-b border-white/20 pb-4">
+                                            <div className="flex items-center gap-2"><i data-lucide="book-open"></i><span className="text-[11px] uppercase tracking-widest font-black">Конспект</span></div>
+                                            <i data-lucide="lightbulb" className="text-yellow-300"></i>
+                                        </div>
+                                        <div className="space-y-5 flex-1">
+                                            <p className="text-base sm:text-lg leading-relaxed font-semibold italic text-indigo-50">{currentCard.answer.conspectus}</p>
+                                            <div className="bg-white/10 rounded-3xl p-5 border border-white/10 backdrop-blur-md">
+                                                <h4 className="text-indigo-200 text-[10px] font-black uppercase tracking-[0.2em] mb-4 text-center">Ключові тези</h4>
+                                                <ul className="space-y-3.5">
+                                                    {currentCard.answer.keyPoints.map((p, i) => (
+                                                        <li key={i} className="flex gap-3 text-[13px] leading-snug">
+                                                            <div className="flex-shrink-0 w-6 h-6 bg-white/20 rounded-lg flex items-center justify-center text-[10px] font-black">{i+1}</div>
+                                                            <span className="font-medium">{p}</span>
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Navigation */}
+                        <div className="shrink-0 flex items-center justify-between gap-2.5 pb-2">
+                            <button onClick={handlePrev} className="w-14 h-14 bg-white rounded-[20px] shadow-sm border border-gray-200 text-gray-500 active:scale-95 transition-all flex items-center justify-center"><i data-lucide="chevron-left"></i></button>
+                            <button onClick={handleFlip} className="flex-1 h-14 bg-indigo-600 text-white rounded-[20px] shadow-md font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-all">
+                                <i data-lucide="rotate-cw" className="w-4 h-4"></i>Перегорнути
+                            </button>
+                            <button onClick={handleNext} className="w-14 h-14 bg-white rounded-[20px] shadow-sm border border-gray-200 text-gray-500 active:scale-95 transition-all flex items-center justify-center"><i data-lucide="chevron-right"></i></button>
+                        </div>
+
+                        {/* Progress */}
+                        <div className="mt-2 shrink-0">
+                            <div className="bg-gray-200 h-1.5 w-full rounded-full overflow-hidden">
+                                <div className="bg-indigo-600 h-full transition-all duration-300" style={{ width: `${((currentIndex + 1) / cards.length) * 100}%` }}></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
